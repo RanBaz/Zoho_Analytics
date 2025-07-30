@@ -9,6 +9,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import re
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ def root():
 
 SHEET_ID = "1CMU_8lXzLzijqVelZxxFOBj4408deFhP5Wf1PMPNIHs"
 SHEET_RANGE = None  # None means append to first worksheet
-CREDENTIALS_FILE = "service_account.json"
+CREDENTIALS_FILE = os.environ.get("GOOGLE_SERVICE_ACCOUNT_FILE", "service_account.json")
 
 # Mapping from input columns to Google Sheet columns
 GSHEET_COLUMNS = [
