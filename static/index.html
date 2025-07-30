@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Filter Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.35);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px dashed #d1d5db;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(249, 250, 251, 0.5);
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-input-wrapper.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+
+        #file-input {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            color: #9ca3af;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-wrapper:hover .upload-icon {
+            color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .upload-text {
+            text-align: center;
+        }
+
+        .upload-text h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-text p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .file-selected {
+            display: none;
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .file-selected.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #065f46;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-top: 1.5rem;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .result.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+
+        .result.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .success-icon, .error-icon {
+            width: 24px;
+            height: 24px;
+            margin: 0 auto 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .header h1 {
+                font-size: 1.875rem;
+            }
+            
+            .file-input-wrapper {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Analytics Upload</h1>
+            <p>Upload your CSV or Excel file to filter and sync with Google Sheets</p>
+        </div>
+
+        <form id="upload-form">
+            <div class="upload-section">
+                <div class="file-input-wrapper" id="file-wrapper">
+                    <input type="file" id="file-input" name="file" accept=".csv,.xlsx" required />
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <div class="upload-text">
+                        <h3>Choose File</h3>
+                        <p>Drag and drop your file here, or click to browse<br>
+                        <small>Supports .csv and .xlsx files</small></p>
+                    </div>
+                </div>
+                
+                <div class="file-selected" id="file-selected">
+                    <div class="file-name">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span id="file-name-text"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-btn">
+                Upload & Process
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Processing your file...</span>
+        </div>
+
+        <div class="result" id="result">
+            <div class="success-icon" id="success-icon" style="display: none;">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="error-icon" id="error-icon" style="display: none;">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div id="result-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const fileWrapper = document.getElementById('file-wrapper');
+        const fileSelected = document.getElementById('file-selected');
+        const fileNameText = document.getElementById('file-name-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const resultMessage = document.getElementById('result-message');
+        const successIcon = document.getElementById('success-icon');
+        const errorIcon = document.getElementById('error-icon');
+
+        // Drag and drop functionality
+        fileWrapper.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileWrapper.classList.add('dragover');
+        });
+
+        fileWrapper.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileWrapper.classList.remove('dragover');
+        });
+
+        fileWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileWrapper.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            fileNameText.textContent = file.name;
+            fileSelected.classList.add('show');
+            submitBtn.disabled = false;
+            result.classList.remove('show');
+        }
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                // Hide loading
+                loading.classList.remove('show');
+
+                if (res.ok) {
+                    // Success
+                    result.className = 'result success show';
+                    successIcon.style.display = 'block';
+                    errorIcon.style.display = 'none';
+                    resultMessage.textContent = data.message || 'File processed successfully!';
+                } else {
+                    // Error
+                    result.className = 'result error show';
+                    successIcon.style.display = 'none';
+                    errorIcon.style.display = 'block';
+                    resultMessage.textContent = data.detail || 'Error processing file.';
+                }
+            } catch (err) {
+                // Network error
+                loading.classList.remove('show');
+                result.className = 'result error show';
+                successIcon.style.display = 'none';
+                errorIcon.style.display = 'block';
+                resultMessage.textContent = 'Network or server error. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
